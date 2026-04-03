@@ -1,0 +1,46 @@
+{
+  "name": "code-buddy",
+  "version": "1.0.0",
+  "description": "Code Buddy - 맥북 데스크톱 위를 돌아다니는 AI 코딩 동료들",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "appId": "com.codebuddy.app",
+    "productName": "Code Buddy",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "icon.icns",
+      "target": ["dmg", "zip"],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "title": "Code Buddy",
+      "icon": "icon.icns"
+    },
+    "files": [
+      "main.js",
+      "app.js",
+      "pet.js",
+      "preload.js",
+      "prompts.js",
+      "index.html",
+      "style.css",
+      "icon-tray.png",
+      "icon-tray@2x.png",
+      "icon.png"
+    ]
+  },
+  "keywords": [],
+  "author": "Code Buddy Team",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^41.1.0",
+    "electron-builder": "^26.8.1"
+  }
+}

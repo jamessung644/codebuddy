@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.DS_Store
+Chat/
+*.log
+
+# Config with API keys
+config.json

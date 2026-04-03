@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Buddy</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="world"></div>
+
+  <!-- 컨트롤 패널 -->
+  <div id="control-panel" class="hidden">
+    <div class="panel-header">
+      <h2>🤝 Code Buddy</h2>
+      <button id="close-panel" class="btn-close">✕</button>
+    </div>
+    <div class="control-section">
+      <button id="add-pet-btn" class="btn btn-primary">+ 새 펫 추가</button>
+      <button id="gather-btn" class="btn btn-secondary">모여라!</button>
+      <button id="scatter-btn" class="btn btn-secondary">흩어져라!</button>
+    </div>
+    <div class="control-section control-section-slim">
+      <button id="auto-approve-btn" class="btn btn-secondary btn-toggle" title="자동 승인 OFF (클릭하여 켜기)">🔐 자동 승인</button>
+    </div>
+    <div id="pet-list"></div>
+  </div>
+
+  <!-- 채팅 패널 (그룹 채팅방) -->
+  <div id="chat-panel" class="hidden">
+    <!-- 헤더 -->
+    <div class="chat-panel-header">
+      <div class="chat-team-info">
+        <div class="chat-team-title">Team Chat</div>
+        <div class="chat-team-subtitle" id="chat-team-subtitle">0 members</div>
+        <div class="token-usage-bar" id="token-usage-bar" style="display: none;">
+          <span id="token-usage-text"></span>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <button id="chat-settings-btn" class="btn-icon" title="AI 설정">⚙️</button>
+        <button id="chat-cwd-btn" class="btn-icon" title="작업 폴더">📁</button>
+        <button id="chat-minimize-btn" class="btn-close" title="최소화">−</button>
+        <button id="chat-close-btn" class="btn-close" title="완전 닫기">✕</button>
+      </div>
+    </div>
+
+    <!-- 팀 멤버 & 개별 모델 설정 -->
+    <div id="chat-team-row" class="chat-team-row"></div>
+
+    <!-- 탭 바 -->
+    <div class="chat-tabs">
+      <button class="chat-tab active" data-tab="chat">💬 채팅</button>
+      <button class="chat-tab" data-tab="files">📂 파일</button>
+    </div>
+
+    <!-- 작업 폴더 표시 -->
+    <div class="chat-cwd" id="chat-cwd">~/</div>
+
+    <!-- 채팅 탭 -->
+    <div class="chat-tab-content active" id="tab-chat">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-welcome">
+          <span>펫을 클릭해서 대화를 시작하세요!</span>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <!-- 수신자 선택 -->
+        <div class="chat-target-row" id="chat-target-row"></div>
+        <!-- 입력창 -->
+        <div class="chat-input-row">
+          <textarea id="chat-input" placeholder="메시지를 입력하세요..." rows="1"></textarea>
+          <button id="chat-send-btn" class="btn-send">▶</button>
+          <button id="chat-abort-btn" class="btn-abort" style="display: none;" title="메시지 중단 (⌘+K)">⏹</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 파일 트리 탭 -->
+    <div class="chat-tab-content" id="tab-files">
+      <div class="file-tree" id="file-tree">
+        <div class="chat-welcome">로딩 중...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 펫 모델 드롭다운 (공유, 동적 위치) -->
+  <div id="pet-model-popup" class="pet-model-popup hidden">
+    <div class="model-popup-header">
+      <span id="pet-model-popup-name"></span>
+      <span id="pet-model-popup-role"></span>
+    </div>
+    <div class="model-popup-options">
+      <div class="model-group-label">Claude (CLI)</div>
+      <div class="model-popup-opt" data-provider="claude" data-model="claude-sonnet-4-6">🟠 Sonnet 4.6</div>
+      <div class="model-popup-opt" data-provider="claude" data-model="claude-opus-4-6">🟠 Opus 4.6</div>
+      <div class="model-popup-opt" data-provider="claude" data-model="claude-haiku-4-5-20251001">🟠 Haiku 4.5</div>
+      <div class="model-group-label">OpenAI</div>
+      <div class="model-popup-opt" data-provider="openai" data-model="gpt-4o">🟢 GPT-4o</div>
+      <div class="model-popup-opt" data-provider="openai" data-model="gpt-4o-mini">🟢 GPT-4o Mini</div>
+      <div class="model-popup-opt" data-provider="openai" data-model="o3">🟢 o3</div>
+      <div class="model-group-label">Google Gemini</div>
+      <div class="model-popup-opt" data-provider="gemini" data-model="gemini-2.0-flash">🔵 Gemini 2.0 Flash</div>
+      <div class="model-popup-opt" data-provider="gemini" data-model="gemini-2.5-pro">🔵 Gemini 2.5 Pro</div>
+      <div class="model-group-label" style="color: #888; font-style: italic;">🟣 Ollama (Coming Soon)</div>
+      <div style="padding: 8px 12px; font-size: 11px; color: #999; font-style: italic;">로컬 모델 지원은 다음 업데이트에서 제공됩니다.</div>
+    </div>
+  </div>
+
+  <!-- 펫 추가 모달 -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal">
+      <h3>새 클로드 펫 만들기</h3>
+      <div class="form-group">
+        <label>이름</label>
+        <input type="text" id="pet-name" placeholder="예: 코딩이">
+      </div>
+      <div class="form-group">
+        <label>역할</label>
+        <select id="pet-role">
+          <option value="developer">🛠 개발자</option>
+          <option value="designer">🎨 디자이너</option>
+          <option value="planner">📋 기획자</option>
+          <option value="debugger">🐛 디버거</option>
+          <option value="reviewer">👀 리뷰어</option>
+          <option value="tester">🧪 테스터</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>색상</label>
+        <div id="color-picker">
+          <!-- 따뜻한 계열 -->
+          <div class="color-option" data-color="#C46A6A" style="background:#C46A6A" title="레드"></div>
+          <div class="color-option" data-color="#C4533A" style="background:#C4533A" title="딥레드"></div>
+          <div class="color-option" data-color="#E87B5A" style="background:#E87B5A" title="오렌지"></div>
+          <div class="color-option" data-color="#C4836A" style="background:#C4836A" title="탄"></div>
+          <div class="color-option" data-color="#D4A060" style="background:#D4A060" title="골드"></div>
+          <div class="color-option" data-color="#C4B86A" style="background:#C4B86A" title="옐로우"></div>
+          <!-- 자연 계열 -->
+          <div class="color-option" data-color="#B0C050" style="background:#B0C050" title="라임"></div>
+          <div class="color-option" data-color="#8BC46A" style="background:#8BC46A" title="그린"></div>
+          <div class="color-option" data-color="#5AA860" style="background:#5AA860" title="포레스트"></div>
+          <div class="color-option" data-color="#6AC4B8" style="background:#6AC4B8" title="시안"></div>
+          <div class="color-option" data-color="#4AAAB0" style="background:#4AAAB0" title="딥시안"></div>
+          <div class="color-option" data-color="#70C0A0" style="background:#70C0A0" title="민트"></div>
+          <!-- 차가운 계열 -->
+          <div class="color-option" data-color="#6A9EC4" style="background:#6A9EC4" title="블루"></div>
+          <div class="color-option" data-color="#5A7AB8" style="background:#5A7AB8" title="딥블루"></div>
+          <div class="color-option" data-color="#A0B8D8" style="background:#A0B8D8" title="스카이"></div>
+          <div class="color-option" data-color="#6A7CC4" style="background:#6A7CC4" title="인디고"></div>
+          <div class="color-option" data-color="#8A6AC4" style="background:#8A6AC4" title="퍼플"></div>
+          <div class="color-option" data-color="#B0A0D0" style="background:#B0A0D0" title="라벤더"></div>
+          <!-- 핑크/특수 계열 -->
+          <div class="color-option" data-color="#C46AB8" style="background:#C46AB8" title="마젠타"></div>
+          <div class="color-option" data-color="#A84A8A" style="background:#A84A8A" title="딥마젠타"></div>
+          <div class="color-option" data-color="#E0A0B0" style="background:#E0A0B0" title="핑크"></div>
+          <div class="color-option" data-color="#D08070" style="background:#D08070" title="살몬"></div>
+          <div class="color-option" data-color="#D0D080" style="background:#D0D080" title="파스텔옐로우"></div>
+          <div class="color-option" data-color="#B8B8B8" style="background:#B8B8B8" title="실버"></div>
+        </div>
+        <div class="color-custom-row">
+          <label class="color-custom-label">직접 선택</label>
+          <input type="color" id="color-custom" value="#C4836A" class="color-custom-input">
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button id="modal-cancel" class="btn btn-secondary">취소</button>
+        <button id="modal-create" class="btn btn-primary">만들기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 설정 모달 -->
+  <div id="settings-overlay" class="hidden">
+    <div id="settings-modal">
+      <h3>⚙️ AI 설정</h3>
+      <div class="form-group">
+        <label>🌐 언어 / Language</label>
+        <select id="settings-language">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>OpenAI API Key</label>
+        <input type="password" id="openai-key" placeholder="sk-...">
+      </div>
+      <div class="form-group">
+        <label>Google Gemini API Key</label>
+        <input type="password" id="gemini-key" placeholder="AI...">
+      </div>
+      <div class="form-group" style="opacity: 0.6; pointer-events: none;">
+        <label>🟣 Ollama URL <span style="font-size: 10px; color: #999;">(Coming in next update)</span></label>
+        <input type="text" id="ollama-url" placeholder="http://localhost:11434" disabled>
+      </div>
+      <div class="settings-info">
+        Claude는 CLI를 통해 동작하며 별도 API 키가 필요 없습니다.
+      </div>
+      <div class="modal-buttons">
+        <button id="settings-cancel" class="btn btn-secondary">취소</button>
+        <button id="settings-save" class="btn btn-primary">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="pet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
