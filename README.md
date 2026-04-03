@@ -69,7 +69,7 @@ Code Buddy brings adorable pixel-art pets to your macOS desktop. Each pet is an 
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/codebuddy.git
+git clone https://github.com/jamessung644/codebuddy.git
 cd codebuddy
 
 # Install dependencies
